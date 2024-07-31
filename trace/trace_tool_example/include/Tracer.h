@@ -39,6 +39,7 @@ public:
     void        SaveTraceData           ( void );
     void        StartTrace              ( void );
     void        StopTrace               ( void );
+    void        ReleaseCapture          ( void );
 
     /* For debug */
     pid_t       GetTargetTid_debug      ( void );

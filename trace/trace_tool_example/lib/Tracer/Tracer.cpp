@@ -28,6 +28,28 @@ void Tracer::StopTrace( void )
     SaveMapsData();
 }
 
+void Tracer::ReleaseCapture( void )
+{
+    struct perf_event_mmap_page *header;
+    long PAGESIZE = sysconf( _SC_PAGESIZE );
+    header = ( struct perf_event_mmap_page * )_base;
+    if (_aux && _aux != MAP_FAILED) {
+        munmap(_aux, header->aux_size);
+        _aux = nullptr;
+    }
+
+    if (_base && _base != MAP_FAILED) {
+        munmap(_base, (1 + 128) * PAGESIZE);
+        _base = nullptr;
+    }
+
+    if (_fd != -1) {
+        close(_fd);
+        _fd = -1;
+    }
+}
+
+
 void Tracer::SaveTraceData( void )
 {
     int total_trace_data_size = 0;

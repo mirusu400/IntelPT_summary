@@ -11,31 +11,37 @@ int main( int argc, char *argv[] )
         return -1;
     }
     char **arg = &argv[1];
-    pid_t pid;
-    pid = fork();
-    if ( pid < 0 ) {
-        std::cerr << "failed to fork" << std::endl;
-        return -1;
+    int index = 0;
+    for (index = 0; index < 1000; index++) {
+        pid_t pid;
+        pid = fork();
+        if ( pid < 0 ) {
+            std::cerr << "failed to fork" << std::endl;
+            return -1;
+        }
+
+        // parent ( Intel PT tracer )
+        if ( pid != 0 ) { // parent
+            std::cout << "pid : " << pid << std::endl;
+
+            Tracer *pt = new Tracer( pid );
+            pt->StartTrace();
+
+            int status;
+            waitpid( pid, &status, 0 );
+            std::cout << "\n-- Trace is done --\n" << std::endl;
+
+            pt->StopTrace();
+            pt->ReleaseCapture();
+        }
+        // child ( target binary )
+        else {
+            sleep(1);
+            std::cout << "\n-- Trace start --\n" << std::endl;
+            execvp( arg[0], (char**)arg );
+            return 0;
+        }
     }
-
-    // parent ( Intel PT tracer )
-    if ( pid != 0 ) { // parent
-        std::cout << "pid : " << pid << std::endl;
-
-        Tracer *pt = new Tracer( pid );
-        pt->StartTrace();
-
-        int status;
-        waitpid( pid, &status, 0 );
-        std::cout << "\n-- Trace is done --\n" << std::endl;
-
-        pt->StopTrace();
-    }
-    // child ( target binary )
-    else {
-        sleep(1);
-        std::cout << "\n-- Trace start --\n" << std::endl;
-        execvp( arg[0], (char**)arg );
-    }
+    
     return 0;
 }
